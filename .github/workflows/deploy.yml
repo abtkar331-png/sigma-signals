@@ -1,8 +1,8 @@
 name: Deploy to GitHub Pages
 
+# يعمل يدويًا فقط حتى تُفعَّل الفوترة على حساب GitHub.
+# بعدها: أضف `push: { branches: [main] }` هنا، وغيّر مصدر Pages إلى GitHub Actions.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 # صلاحيات النشر على Pages فقط — لا كتابة على الكود
