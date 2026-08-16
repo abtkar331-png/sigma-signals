@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronDown } from 'lucide-react'
 import SignalCard from './SignalCard'
 import { useI18n } from '../i18n/I18nProvider'
 import FeedState from './FeedState'
+import { useArrivalFlash } from '../hooks/useArrivalFlash'
 
 /**
  * سجل النتائج: عنوان بسيط في المنتصف، ثم حاوية بارتفاع ثابت
@@ -12,31 +12,8 @@ import FeedState from './FeedState'
 export default function ResultsFeed({ trades, status, onRetry, onOpenResults }) {
   const { t } = useI18n()
 
-  /*
-    وميض أخضر على حواف الحاوية عند وصول صفقة جديدة.
-    نتتبّع معرّف أحدث صفقة: تغيّره يعني أن صفقة دخلت للتوّ.
-    نتجاهل أول تعبئة للقائمة حتى لا يومض الإطار بمجرد فتح التطبيق.
-  */
-  const topId = trades[0]?.id
-  const previousTopId = useRef(null)
-  const [flash, setFlash] = useState(false)
-
-  useEffect(() => {
-    if (!topId) return
-
-    if (previousTopId.current === null) {
-      previousTopId.current = topId
-      return
-    }
-
-    if (topId === previousTopId.current) return
-
-    previousTopId.current = topId
-    setFlash(true)
-
-    const timer = setTimeout(() => setFlash(false), 1000)
-    return () => clearTimeout(timer)
-  }, [topId])
+  // وميض ذهبي على حواف الحاوية عند وصول صفقة جديدة
+  const flash = useArrivalFlash(trades.map((t) => t.id).join(','))
 
   return (
     <section className="px-4">
@@ -73,7 +50,7 @@ export default function ResultsFeed({ trades, status, onRetry, onOpenResults }) 
           'relative rounded-2xl border bg-ink-900/40 p-2.5',
           'transition-[border-color,box-shadow] duration-500',
           flash
-            ? 'border-win/55 shadow-[0_0_18px_-2px_rgba(69,196,99,0.45)]'
+            ? 'border-gold-500/60 shadow-[0_0_18px_-2px_rgba(201,162,39,0.5)]'
             : 'border-white/[0.06] shadow-none',
         ].join(' ')}
       >

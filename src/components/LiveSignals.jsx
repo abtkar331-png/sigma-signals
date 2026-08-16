@@ -4,6 +4,7 @@ import SignalCard from './SignalCard'
 import { useI18n } from '../i18n/I18nProvider'
 import FeedState from './FeedState'
 import { CONTACT_URL } from '../config'
+import { useArrivalFlash } from '../hooks/useArrivalFlash'
 
 
 /** نقطة خضراء نابضة مع هالة خفيفة حولها */
@@ -29,6 +30,9 @@ export default function LiveSignals({
   timeZone,
 }) {
   const { t } = useI18n()
+
+  // وميض أخضر على حواف الإطار لحظة وصول إشارة جديدة
+  const flash = useArrivalFlash(signals.map((s) => s.id).join(','))
 
   return (
     <section className="px-4">
@@ -61,7 +65,15 @@ export default function LiveSignals({
         />
 
         {/* المحتوى معتم بالكامل حتى لا يظهر الشعاع إلا عند الحافة */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-ink-900 p-3">
+        <div
+          className={[
+            'relative overflow-hidden rounded-2xl border bg-ink-900 p-3',
+            'transition-[border-color,box-shadow] duration-500',
+            flash
+              ? 'border-win/55 shadow-[0_0_18px_-2px_rgba(69,196,99,0.45)]'
+              : 'border-white/[0.06] shadow-none',
+          ].join(' ')}
+        >
           {/* التمويه يُرفع فور تفعيل الاشتراك ويعود تلقائيًا عند انتهائه */}
           <div
             className={
