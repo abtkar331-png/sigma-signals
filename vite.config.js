@@ -8,6 +8,15 @@ export default defineConfig({
     المحلي وعند النشر على نطاق خاص لاحقًا دون تعديل الملف.
   */
   base: process.env.VITE_BASE_PATH || '/',
+
+  /*
+    بصمة الإصدار تُحقن وقت البناء ويقارنها التطبيق بـ version.json المنشور،
+    فيعرف أن نسخة أحدث صارت متاحة ويعيد التحميل وحده.
+  */
+  define: {
+    __BUILD_ID__: JSON.stringify(process.env.BUILD_ID ?? String(Date.now())),
+  },
+
   plugins: [react()],
   server: {
     host: true, // مطلوب لتجربة التطبيق على الهاتف عبر الشبكة المحلية

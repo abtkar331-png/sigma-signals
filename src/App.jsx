@@ -18,6 +18,7 @@ import { useProfile } from './hooks/useProfile'
 import { useSubscription } from './hooks/useSubscription'
 import { usePlatforms } from './hooks/usePlatforms'
 import { useBackButton } from './hooks/useBackButton'
+import { useAutoUpdate } from './hooks/useAutoUpdate'
 import { findCountry } from './data/countries'
 import { BRAND_NAME } from './config'
 
@@ -25,6 +26,9 @@ export default function App() {
   // نافذة واحدة مفتوحة في كل وقت: results | profile | more | platforms | timezone | auth | null
   const [dialog, setDialog] = useState(null)
   const { tg, haptic } = useTelegram()
+
+  // يلتقط أي نشر جديد ويعيد التحميل تلقائيًا
+  useAutoUpdate()
 
   // مصدر واحد للبيانات يُغذّي الصفحة والديالوج معًا
   const { closed: trades, live, status: tradesStatus, retry: retryTrades } =

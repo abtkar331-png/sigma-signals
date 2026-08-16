@@ -1,10 +1,8 @@
 /**
  * نشر التطبيق على GitHub Pages من الجهاز مباشرة.
  *
- * لماذا لا نستخدم GitHub Actions؟
- * موجود ملف سير عمل جاهز في `.github/workflows/deploy.yml`، لكنه يحتاج
- * تفعيل الفوترة على حساب GitHub. حتى ذلك الحين يبني هذا السكربت المشروع
- * محليًا ويدفع مجلد dist إلى فرع gh-pages.
+ * يبني، يدفع إلى فرع gh-pages، ثم ينتظر حتى يصبح الإصدار الجديد
+ * على الهواء فعلًا — لا يكتفي بنجاح الدفع.
  *
  * التشغيل:  npm run deploy
  */
@@ -15,54 +13,84 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const BRANCH = 'gh-pages'
+const BUILD_ID = String(Date.now())
 
-// اسم المستودع يحدّد المسار الفرعي على Pages
-const REPO = execFileSync('git', ['remote', 'get-url', 'origin'], { encoding: 'utf8' })
-  .trim()
-  .replace(/\.git$/, '')
-  .split('/')
-  .pop()
+const run = (cmd, args, opts = {}) => execFileSync(cmd, args, { stdio: 'inherit', ...opts })
+const out = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8' }).trim()
 
-const run = (cmd, args, opts = {}) =>
-  execFileSync(cmd, args, { stdio: 'inherit', ...opts })
+const origin = out('git', ['remote', 'get-url', 'origin']).replace(/\.git$/, '')
+const REPO = origin.split('/').pop()
+const OWNER = origin.split('/').at(-2)
+const SITE = `https://${OWNER}.github.io/${REPO}/`
 
-console.log(`\n▸ بناء المشروع للمسار /${REPO}/`)
+const started = Date.now()
+const since = () => `${((Date.now() - started) / 1000).toFixed(0)}س`
+
+console.log(`\n▸ بناء الإصدار ${BUILD_ID}`)
 run('npm', ['run', 'build'], {
   shell: process.platform === 'win32',
-  env: { ...process.env, VITE_BASE_PATH: `/${REPO}/` },
+  env: { ...process.env, VITE_BASE_PATH: `/${REPO}/`, BUILD_ID },
 })
 
-// ‎.nojekyll‎ يمنع GitHub من تجاهل الملفات التي تبدأ بشرطة سفلية
+// نفس البصمة المحقونة في الحزمة — عليها يقارن التطبيق ليعرف أن نسخة أحدث نُشرت
+writeFileSync('dist/version.json', JSON.stringify({ build: BUILD_ID }))
 writeFileSync('dist/.nojekyll', '')
-// أي مسار غير موجود يعيد نفس الصفحة — التطبيق صفحة واحدة
 copyFileSync('dist/index.html', 'dist/404.html')
 
 /*
-  النشر داخل مجلد مؤقّت منفصل وليس في مجلد المشروع.
-  تبديل الفروع داخل مجلد العمل نفسه يعرّض ملفات المصدر للحذف،
-  أما شجرة العمل المؤقّتة فمعزولة تمامًا.
+  النشر داخل شجرة عمل مؤقّتة منفصلة: تبديل الفروع داخل مجلد المشروع
+  يعرّض ملفات المصدر للحذف، أمّا الشجرة المؤقّتة فمعزولة تمامًا.
 */
 const work = mkdtempSync(join(tmpdir(), 'pages-'))
 
 try {
   run('git', ['worktree', 'add', '-q', '--detach', work])
-
-  /*
-    فرع مؤقّت باسم فريد ثم يُدفع إلى gh-pages مباشرة.
-    استخدام اسم gh-pages محليًا يفشل عند تكرار النشر لأن الفرع يبقى موجودًا،
-    والدفع بصيغة HEAD:gh-pages يغني عن الاحتفاظ به أصلًا.
-  */
   run('git', ['-C', work, 'checkout', '-q', '--orphan', `pages-${process.pid}`])
   run('git', ['-C', work, 'rm', '-rq', '--cached', '.'])
 
   cpSync('dist', work, { recursive: true })
 
   run('git', ['-C', work, 'add', '-A'])
-  run('git', ['-C', work, 'commit', '-q', '-m', 'نشر الإصدار المبني — SIGNAL PRO'])
+  run('git', ['-C', work, 'commit', '-q', '-m', `نشر ${BUILD_ID}`])
   run('git', ['-C', work, 'push', '-q', '--force', 'origin', `HEAD:${BRANCH}`])
-
-  console.log(`\n✓ تم النشر: https://${process.env.GH_USER ?? 'abtkar331-png'}.github.io/${REPO}/`)
+  console.log(`▸ دُفع إلى ${BRANCH} (${since()})`)
 } finally {
   run('git', ['worktree', 'remove', '--force', work])
   rmSync(work, { recursive: true, force: true })
+}
+
+// GitHub لا يبني فورًا بعد الدفع؛ الطلب الصريح يختصر الانتظار
+try {
+  execFileSync('gh', ['api', '-X', 'POST', `repos/${OWNER}/${REPO}/pages/builds`], {
+    stdio: 'ignore',
+  })
+} catch {
+  // قد يكون هناك بناء قيد التنفيذ — لا ضرر
+}
+
+console.log('▸ في انتظار نشر GitHub...')
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+let live = false
+
+for (let i = 0; i < 60; i++) {
+  await sleep(3000)
+  try {
+    const res = await fetch(`${SITE}version.json?t=${Date.now()}`, { cache: 'no-store' })
+    if (res.ok && (await res.json()).build === BUILD_ID) {
+      live = true
+      break
+    }
+  } catch {
+    // الموقع قيد إعادة البناء — نواصل الانتظار
+  }
+}
+
+if (live) {
+  console.log(`\n✓ التحديث على الهواء (${since()})`)
+  console.log(`  ${SITE}`)
+  console.log('  المستخدمون المفتوح عندهم التطبيق يأخذونه خلال دقيقتين دون تدخّل.')
+} else {
+  console.error('\n✗ انتهت المهلة ولم يظهر الإصدار الجديد. راجِع حالة Pages.')
+  process.exitCode = 1
 }
