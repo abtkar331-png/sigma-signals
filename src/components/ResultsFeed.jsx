@@ -77,7 +77,11 @@ export default function ResultsFeed({ trades, status, onRetry, onOpenResults }) 
             : 'border-white/[0.06] shadow-none',
         ].join(' ')}
       >
-        <div className="no-scrollbar max-h-[19rem] space-y-2.5 overflow-y-auto overscroll-contain [contain:content]">
+        {/*
+          ارتفاع أقصر: القائمة تُمرَّر داخليًا وتحتوي العشرين صفقة كما هي،
+          فالتقليص يوفّر مساحة الصفحة دون إخفاء أي نتيجة.
+        */}
+        <div className="no-scrollbar max-h-[14rem] space-y-2.5 overflow-y-auto overscroll-contain [contain:content]">
           {trades.length === 0 && <FeedState status={status} onRetry={onRetry} />}
           {/*
             popLayout ضروري مع خاصية layout: يُخرج البطاقة المنتهية من تدفّق
