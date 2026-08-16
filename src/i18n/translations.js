@@ -32,6 +32,8 @@ export const translations = {
     up: 'صعود',
     down: 'هبوط',
     minutesShort: 'د',
+    entryLabel: 'وقت الدخول',
+    durationLabel: 'مدّة الصفقة',
 
     // الأسواق والاتجاهات
     forex: 'FOREX',
@@ -150,6 +152,8 @@ export const translations = {
     up: 'UP',
     down: 'DOWN',
     minutesShort: 'm',
+    entryLabel: 'Entry time',
+    durationLabel: 'Duration',
 
     forex: 'FOREX',
     binary: 'BINARY OPTION',
