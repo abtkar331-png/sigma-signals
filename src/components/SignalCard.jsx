@@ -8,9 +8,10 @@ import { useI18n } from '../i18n/I18nProvider'
  *   السجل → نتيجة منتهية: الزوج، السوق، الاتجاه، رابحة/خاسرة، المؤشّر.
  */
 const STATE_STYLES = {
+  // البثّ: الصعود والهبوط كلاهما أخضر — اللون هنا هوية القسم لا دلالة اتجاه
   up: { frame: 'border-win/35 bg-win/10 text-win', pair: 'text-steel-100' },
-  down: { frame: 'border-loss/40 bg-white/[0.03] text-steel-300', pair: 'text-steel-100' },
-  win: { frame: 'border-win/35 bg-win/10 text-win', pair: 'text-steel-100' },
+  down: { frame: 'border-win/35 bg-win/10 text-win', pair: 'text-steel-100' },
+  win: { frame: 'border-gold-500/40 bg-gold-500/[0.1] text-gold-400', pair: 'text-steel-100' },
   loss: { frame: 'border-white/[0.06] bg-white/[0.02] text-steel-500', pair: 'text-steel-400' },
 }
 
@@ -102,15 +103,10 @@ export default function SignalCard({ trade, timeZone }) {
     <div className="glass-card flex items-center justify-between gap-3 px-3.5 py-3">
       <div className="flex min-w-0 items-center gap-3">
         {/*
-          أيقونة الاتجاه تتبع الاتجاه لا النتيجة: أخضر للصعود ورمادي للهبوط.
-          ربطها بالنتيجة كان يجعل صفقة بيع رابحة تظهر بسهم هابط أخضر،
-          فيقرأ السهم على أنه صعود. النتيجة تبقى في الشارة وحدها.
+          سهم الاتجاه في السجل محايد اللون دائمًا: اللون هنا يخصّ النتيجة
+          وحدها، وتلوين السهم كان يُقرأ خطأً على أنه ربح أو خسارة.
         */}
-        <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${
-            STATE_STYLES[isUp ? 'up' : 'down'].frame
-          }`}
-        >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-steel-400">
           <DirectionIcon className="h-4 w-4" strokeWidth={2.2} />
         </span>
 
