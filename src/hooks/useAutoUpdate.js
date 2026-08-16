@@ -2,6 +2,27 @@ import { useEffect, useRef } from 'react'
 import { asset } from '../lib/asset'
 
 const CHECK_INTERVAL_MS = 120000
+const ATTEMPT_KEY = 'signalpro.updateAttempt'
+
+/**
+ * هل جرّبنا إعادة التحميل لأجل هذا الإصدار في هذه الجلسة؟
+ *
+ * تخزّن GitHub صفحة index.html على شبكتها عشر دقائق، فقد يصل المستخدم
+ * صفحة قديمة بينما يعلن version.json إصدارًا أحدث. بلا هذا الحارس تدخل
+ * الصفحة في إعادة تحميل لا تنتهي: تقرأ الجديد، تعيد التحميل، فيصلها
+ * القديم مرّة أخرى. محاولة واحدة تكفي — والزيارة التالية ستجد الصفحة
+ * الحديثة بعد انتهاء مدّة التخزين.
+ */
+function alreadyTried(build) {
+  try {
+    if (sessionStorage.getItem(ATTEMPT_KEY) === build) return true
+    sessionStorage.setItem(ATTEMPT_KEY, build)
+    return false
+  } catch {
+    // التخزين معطّل — نكتفي بمحاولة واحدة لكل تحميل
+    return false
+  }
+}
 
 /**
  * تحديث ذاتي للتطبيق.
@@ -29,6 +50,7 @@ export function useAutoUpdate() {
 
         const { build } = await res.json()
         if (cancelled || !build || build === __BUILD_ID__) return
+        if (alreadyTried(build)) return
 
         pending.current = true
         if (document.visibilityState === 'hidden') location.reload()
