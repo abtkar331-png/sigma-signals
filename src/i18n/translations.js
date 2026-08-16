@@ -29,6 +29,9 @@ export const translations = {
     pending: 'جارية',
     win: 'رابحة',
     loss: 'خاسرة',
+    up: 'صعود',
+    down: 'هبوط',
+    minutesShort: 'د',
 
     // الأسواق والاتجاهات
     forex: 'FOREX',
@@ -144,6 +147,9 @@ export const translations = {
     pending: 'Open',
     win: 'Win',
     loss: 'Loss',
+    up: 'UP',
+    down: 'DOWN',
+    minutesShort: 'm',
 
     forex: 'FOREX',
     binary: 'BINARY OPTION',

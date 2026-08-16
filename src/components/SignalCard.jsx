@@ -1,17 +1,19 @@
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { ArrowUpRight, ArrowDownRight, Clock, Timer } from 'lucide-react'
 import { useI18n } from '../i18n/I18nProvider'
 
 /**
  * بطاقة صفقة واحدة — تُستخدم في البث المباشر وفي سجل النتائج.
  *
- * ثلاث حالات:
- *   جارية (لا نتيجة بعد) → ذهبي
- *   رابحة → أخضر
- *   خاسرة → رمادي مطفي
+ * البثّ يعرض خطّة الدخول: الزوج، وقت الدخول، الاتجاه، والمدّة.
+ * السجل يعرض النتيجة: رابحة أو خاسرة مع المؤشّر الذي أعطى الإشارة.
  */
 const STATE_STYLES = {
-  pending: {
-    frame: 'border-gold-500/30 bg-gold-500/[0.08] text-gold-400',
+  up: {
+    frame: 'border-win/35 bg-win/10 text-win',
+    pair: 'text-steel-100',
+  },
+  down: {
+    frame: 'border-loss/40 bg-white/[0.03] text-steel-300',
     pair: 'text-steel-100',
   },
   win: {
@@ -24,13 +26,30 @@ const STATE_STYLES = {
   },
 }
 
-export default function SignalCard({ trade }) {
+export default function SignalCard({ trade, timeZone }) {
   const { t, tIndicator } = useI18n()
 
-  const key = trade.outcome ?? 'pending'
-  const state = STATE_STYLES[key]
   const isUp = trade.direction === 'buy' || trade.direction === 'call'
   const DirectionIcon = isUp ? ArrowUpRight : ArrowDownRight
+
+  // الصفقة المقفولة تُعرض بنتيجتها، والحيّة باتجاهها
+  const key = trade.outcome ?? (isUp ? 'up' : 'down')
+  const state = STATE_STYLES[key]
+  const isLive = !trade.outcome
+
+  /*
+    وقت الدخول بتوقيت الدولة التي اختارها المستخدم.
+    التنسيق بأرقام لاتينية دائمًا (en-GB) لأن الأرقام العربية الهندية
+    تُقرأ بصعوبة في سياق تداول سريع.
+  */
+  const entryTime = trade.entry_at
+    ? new Intl.DateTimeFormat('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        ...(timeZone ? { timeZone } : {}),
+      }).format(new Date(trade.entry_at))
+    : null
 
   return (
     <div className="glass-card flex items-center justify-between gap-3 px-3.5 py-3">
@@ -48,16 +67,30 @@ export default function SignalCard({ trade }) {
           >
             {trade.pair}
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-steel-400">
+
+          <p className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-steel-400">
             {/* bdi يعزل الاسم اللاتيني فلا يقلب ترتيب السطر في الاتجاه RTL */}
             <bdi className="font-mono tracking-wide">{t(trade.market)}</bdi>
-            {' · '}
-            {t(trade.direction)}
+
+            {isLive && entryTime && (
+              <>
+                <span aria-hidden>·</span>
+                <Clock className="h-3 w-3 shrink-0" strokeWidth={2} />
+                <bdi className="font-mono tracking-wide">{entryTime}</bdi>
+              </>
+            )}
+
+            {!isLive && (
+              <>
+                <span aria-hidden>·</span>
+                {t(trade.direction)}
+              </>
+            )}
           </p>
         </div>
       </div>
 
-      {/* جهة النهاية: الحالة والمؤشّر الذي أعطى الإشارة */}
+      {/* جهة النهاية: الاتجاه أو النتيجة، وتحته المدّة أو المؤشّر */}
       <div className="flex shrink-0 flex-col items-end gap-1">
         <span
           className={`whitespace-nowrap rounded-lg border px-2.5 py-1 text-[10px] font-semibold ${state.frame}`}
@@ -65,9 +98,17 @@ export default function SignalCard({ trade }) {
           {t(key)}
         </span>
 
-        <span className="whitespace-nowrap text-[9px] text-steel-500">
-          {tIndicator(trade.indicator)}
-        </span>
+        {isLive && trade.duration_min ? (
+          <span className="flex items-center gap-1 whitespace-nowrap text-[9px] text-steel-500">
+            <Timer className="h-2.5 w-2.5" strokeWidth={2} />
+            <bdi className="font-mono">{trade.duration_min}</bdi>
+            {t('minutesShort')}
+          </span>
+        ) : (
+          <span className="whitespace-nowrap text-[9px] text-steel-500">
+            {tIndicator(trade.indicator)}
+          </span>
+        )}
       </div>
     </div>
   )

@@ -43,9 +43,13 @@ export function useTrades() {
         .limit(CLOSED_LIMIT),
       supabase
         .from('trades')
-        .select('id, pair, market, direction, indicator, outcome, opened_at')
+        .select(
+          'id, pair, market, direction, indicator, outcome, opened_at, entry_at, duration_min, is_manual'
+        )
         .eq('status', 'live')
-        .order('opened_at', { ascending: false })
+        // الإشارة اليدوية أوّلًا: الأدمن أضافها عمدًا فلا تُدفن تحت المولّد
+        .order('is_manual', { ascending: false })
+        .order('entry_at', { ascending: true })
         .limit(LIVE_LIMIT),
     ])
 

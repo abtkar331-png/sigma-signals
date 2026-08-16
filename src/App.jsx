@@ -96,6 +96,7 @@ export default function App() {
               cycleKey={trades[0]?.id}
               unlocked={isSubscribed}
               onUnlock={() => openDialog('auth')}
+              timeZone={selectedCountry?.zone}
             />
 
             <ResultsFeed

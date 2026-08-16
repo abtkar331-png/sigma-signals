@@ -20,7 +20,14 @@ function LiveDot() {
  * قسم الإشارات المباشرة — القائمة مموّهة حتى تفعيل الاشتراك.
  * الصفقات تأتي جاهزة من قاعدة البيانات، فيرى كل المستخدمين نفس الإشارات.
  */
-export default function LiveSignals({ signals, status, cycleKey, unlocked, onUnlock }) {
+export default function LiveSignals({
+  signals,
+  status,
+  cycleKey,
+  unlocked,
+  onUnlock,
+  timeZone,
+}) {
   const { t } = useI18n()
 
   return (
@@ -76,7 +83,7 @@ export default function LiveSignals({ signals, status, cycleKey, unlocked, onUnl
                   exit={{ opacity: 0, scale: 0.97 }}
                   transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <SignalCard trade={signal} />
+                  <SignalCard trade={signal} timeZone={timeZone} />
                 </motion.div>
               ))}
             </AnimatePresence>
