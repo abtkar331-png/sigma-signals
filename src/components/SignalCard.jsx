@@ -101,8 +101,15 @@ export default function SignalCard({ trade, timeZone }) {
   return (
     <div className="glass-card flex items-center justify-between gap-3 px-3.5 py-3">
       <div className="flex min-w-0 items-center gap-3">
+        {/*
+          أيقونة الاتجاه تتبع الاتجاه لا النتيجة: أخضر للصعود ورمادي للهبوط.
+          ربطها بالنتيجة كان يجعل صفقة بيع رابحة تظهر بسهم هابط أخضر،
+          فيقرأ السهم على أنه صعود. النتيجة تبقى في الشارة وحدها.
+        */}
         <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${state.frame}`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${
+            STATE_STYLES[isUp ? 'up' : 'down'].frame
+          }`}
         >
           <DirectionIcon className="h-4 w-4" strokeWidth={2.2} />
         </span>
